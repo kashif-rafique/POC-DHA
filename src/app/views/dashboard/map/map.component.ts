@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnInit } from '@angular/core';
 import Feature from 'ol/Feature';
 import Map from 'ol/Map';
 import Point from 'ol/geom/Point';
@@ -18,7 +18,7 @@ import {boundingExtent} from 'ol/extent';
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
-export class MapComponent implements OnInit, OnChanges {
+export class MapComponent implements OnInit, OnChanges , AfterViewInit {
   public map!: Map;
   public newMap!: Map;
   distanceInput;
@@ -42,6 +42,47 @@ export class MapComponent implements OnInit, OnChanges {
   raster;
   
     constructor() {
+      
+     }
+  ngAfterViewInit(): void {
+    // throw new Error('Method not implemented.');
+    // console.log(this.clusterSource.features.map(res => console.log(res)));
+  }
+  
+  btnClick(){
+  
+  console.log('styles')
+    const features = this.clusterSource.getFeatures((features)=>{
+      console.log(features)
+    })
+    const stylesArray = features.map(feature =>{
+      console.log("feat",feature)
+      const styleCache = {};
+      const size = feature.get('features').length;
+      let style = styleCache[size];
+      
+      return new Style({
+        image: new CircleStyle({
+          radius: 10,
+          stroke: new Stroke({
+            color: '#fff',
+          }),
+          fill: new Fill({
+            color: '#3399CC',
+          }),
+        }),
+        text: new Text({
+          text: size.toString(),
+          fill: new Fill({
+            color: '#fff',
+          }),
+        }),
+      });
+  })
+    this.clusters.setStyle(stylesArray)
+  }
+    ngOnInit(): void {
+
       this.distanceInput = "40"
       this.minDistanceInput = "20"
       
@@ -62,65 +103,23 @@ export class MapComponent implements OnInit, OnChanges {
         minDistance: parseInt(this.minDistanceInput, 10),
         source: this.source,
       });
+    
       const styleCache = {};
       // console.log('feature',this.features)
-      console.log('CLUSTOTRS',this.clusterSource.features)
-      const stylesArray = this.clusterSource.features.map(feature =>{
-        console.log("feat",feature)
-        const size = feature.get('features').length;
-        let style = styleCache[size];
-        if (!style) {
-          style = new Style({
-            image: new CircleStyle({
-              radius: 10,
-              stroke: new Stroke({
-                color: '#fff',
-              }),
-              fill: new Fill({
-                color: '#3399CC',
-              }),
-            }),
-            text: new Text({
-              text: size.toString(),
-              fill: new Fill({
-                color: '#fff',
-              }),
-            }),
-          });
-          this.styleCache[size] = style;
-        }
-        return style;
-    })
+
+      let a = Array.from(this.clusterSource.features);
+      
+      
       
       
       this.clusters = new VectorLayer({
-        source: this.clusterSource,
-         style: new Style({
-          image: new CircleStyle({
-            radius: 10,
-            stroke: new Stroke({
-              color: '#fff',
-            }),
-            fill: new Fill({
-              color: '#3399CC',
-            }),
-          }),
-          text: new Text({
-            text: '100',
-            fill: new Fill({
-              color: '#fff',
-            }),
-          }),
-        }),
+        source: this.clusterSource
       });
-
       
       this.raster = new TileLayer({
         source: new OSM(),
       });
-     }
-  
-    ngOnInit(): void {
+
       // console.log('clusters',this.clusters,this.source)
       this.map = new Map({
         layers: [this.raster, this.clusters],
@@ -128,10 +127,9 @@ export class MapComponent implements OnInit, OnChanges {
         view: new View({
           center: [0, 0],
           // center:  [55.2708, 25.2048],
-          zoom: 5,
+          zoom: 4,
         }),
       });
-      
       // distanceInput.addEventListener('input', function () {
       //   clusterSource.setDistance(parseInt(distanceInput.value, 10));
       // });
